@@ -39,11 +39,20 @@ export class UserService {
 
   static async getProfile(id: number): Promise<User> {
     try {
-      // Cập nhật thông tin người dùng theo ID
+      // Lấy thông tin user với role
       const result = await db("users")
-        .select("id", "name", "avatar", "email")
-        .where("id", id)
-        .where("is_deleted", 0)
+        .select(
+          "users.id", 
+          "users.name", 
+          "users.avatar", 
+          "users.email",
+          "roles.name as role_name",
+          "roles.id as role_id"
+        )
+        .leftJoin("user_roles", "users.id", "user_roles.user_id")
+        .leftJoin("roles", "user_roles.role_id", "roles.id")
+        .where("users.id", id)
+        .where("users.is_deleted", 0)
         .first();
 
       // Xử lý avatar URL - nếu có avatar thì tạo full URL, nếu không thì dùng default
