@@ -21,4 +21,12 @@ export const RouterConfigs:RouterConfig = {
         table: 'users',
         isPublic: false,
     },
+    'courses': {
+        table: 'courses',
+        isPublic: false,
+    },
+    'classes': {
+        table: 'classes',
+        isPublic: false,
+    },
 };

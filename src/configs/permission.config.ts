@@ -50,7 +50,19 @@ export const  Permissions: Permission[] = [
         role_id: 3,
         table_name: 'users',
         pms: [1, 0, 0, 0, 1] // [canAccess, canAdd, canEdit, canDelete, onlyGetPersonal] - chỉ xem thông tin cá nhân
-    }
+    },
+     {
+        id: 1,
+        role_id: 1,
+        table_name: 'courses',
+        pms: [1, 1, 1, 1, 0]
+    },
+    {
+        id: 1,
+        role_id: 1,
+        table_name: 'classes',
+        pms: [1, 1, 1, 1, 0]
+    },
 
 ]
 
