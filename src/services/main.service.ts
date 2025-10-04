@@ -70,7 +70,7 @@ export class MainService {
             columnsMap[column.Field] = column.Type;
         });
 
-        let query = db(table).select('*');
+        let query = db(table).select('*').where({ is_deleted: 0 });
 
         // console.log(query.toSQL());
         // console.log(conditions);
