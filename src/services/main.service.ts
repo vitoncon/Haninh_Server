@@ -29,10 +29,20 @@ export class MainService {
     }
 
     static async softDeleteRecord(table: string, id: number): Promise<PostUpdateDeleteResponse> {
-        const affectedRows = await db(table).where({ id }).update({ is_deleted: 1 });
+        const columnsInfo = await db.raw(`SHOW COLUMNS FROM ??`, [table]);
+        const hasIsDeleted = columnsInfo[0].some((col: any) => col.Field === 'is_deleted');
+
+        let affectedRows = 0;
+
+        if (hasIsDeleted) {
+            affectedRows = await db(table).where({ id }).update({ is_deleted: 1 });
+        } else {
+            affectedRows = await db(table).where({ id }).del();
+        }
+
         if (affectedRows) {
             return {
-                message: 'inserted successfully',
+                message: hasIsDeleted ? 'soft deleted successfully' : 'hard deleted successfully',
                 code: 'success',
                 data: id,
             };
@@ -70,8 +80,11 @@ export class MainService {
             columnsMap[column.Field] = column.Type;
         });
 
-        let query = db(table).select('*').where({ is_deleted: 0 });
-
+        // Nếu bảng có is_deleted thì tự động where is_deleted = 0
+        let query = db(table).select('*');
+        if (columnsMap['is_deleted']) {
+            query = query.where({ is_deleted: 0 });
+        }
         // console.log(query.toSQL());
         // console.log(conditions);
         
