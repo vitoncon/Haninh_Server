@@ -3,31 +3,6 @@ import { Permission } from "@interfaces/permissions.interface";
 export const  Permissions: Permission[] = [
     {
         id: 1,
-        role_id: 1,
-        table_name: 'categories',
-        pms: [1, 1,1, 1, 0] // [canAccess, canAdd, canEdit, canDelete, onlyGetPersonal]
-    },
-    {
-        id: 1,
-        role_id: 1,
-        table_name: 'products',
-        pms: [1, 1,1, 1, 0] // [canAccess, canAdd, canEdit, canDelete, onlyGetPersonal]
-    },
-    {
-        id: 1,
-        role_id: 1,
-        table_name: 'orders',
-        pms: [1, 1,1, 1, 0] // [canAccess, canAdd, canEdit, canDelete, onlyGetPersonal]
-    },
-    {
-        id: 1,
-        role_id: 1,
-        table_name: 'tests',
-        pms: [1, 1,1, 1, 0] // [canAccess, canAdd, canEdit, canDelete, onlyGetPersonal]
-    }
-    ,
-    {
-        id: 1,
         role_id: 2,
         table_name: 'tests',
         pms: [1, 1,1, 1, 0] // [canAccess, canAdd, canEdit, canDelete, onlyGetPersonal]
@@ -37,19 +12,6 @@ export const  Permissions: Permission[] = [
         role_id: 2,
         table_name: 'users',
         pms: [1, 1,1, 1, 1] // [canAccess, canAdd, canEdit, canDelete, onlyGetPersonal]
-    },
-    // Quyền cho role Giáo viên (role_id: 3)
-    {
-        id: 3,
-        role_id: 3,
-        table_name: 'tests',
-        pms: [1, 1, 1, 1, 0] // [canAccess, canAdd, canEdit, canDelete, onlyGetPersonal]
-    },
-    {
-        id: 3,
-        role_id: 3,
-        table_name: 'users',
-        pms: [1, 0, 0, 0, 1] // [canAccess, canAdd, canEdit, canDelete, onlyGetPersonal] - chỉ xem thông tin cá nhân
     },
      {
         id: 1,
@@ -63,6 +25,17 @@ export const  Permissions: Permission[] = [
         table_name: 'classes',
         pms: [1, 1, 1, 1, 0]
     },
-
+    {
+        id: 1,
+        role_id: 1,
+        table_name: 'schedules',
+        pms: [1, 1, 1, 1, 0]
+    },
+    {
+        id: 1,
+        role_id: 1,
+        table_name: 'teachers',
+        pms: [1, 1, 1, 1, 0]
+    },
 ]
 
