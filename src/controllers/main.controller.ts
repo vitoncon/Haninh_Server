@@ -125,6 +125,7 @@ export class MainController {
             const orderBy = req.query.order_by?.toString();
             const limit = parseInt(req.query.limit?.toString() ?? '20', 10);
             const page = parseInt(req.query.page?.toString() ?? '1', 10);
+            const searchKeyword = (req.query.q?.toString() ?? req.query.search?.toString() ?? '').trim();
 
             const response = await MainService.getRecords(
                 table.table,
@@ -134,7 +135,8 @@ export class MainController {
                 order,
                 orderBy,
                 limit,
-                page
+                page,
+                searchKeyword
             );
             
             

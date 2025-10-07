@@ -70,7 +70,8 @@ export class MainService {
         order: string | undefined,
         orderBy: string | undefined,
         limit: number,
-        page: number
+        page: number,
+        searchKeyword?: string
     ): Promise<GetResponse> {
         // console.log('hello world');
         
@@ -170,6 +171,26 @@ export class MainService {
                     
                 }
             });
+        }
+
+        // Full table keyword search across string-like columns
+        if (searchKeyword && searchKeyword.length > 0) {
+            const keyword = `%${searchKeyword}%`;
+            const stringColumns = Object.entries(columnsMap)
+                .filter(([_, type]) => typeof type === 'string' && (type.includes('char') || type.includes('text'))) 
+                .map(([name]) => name);
+
+            if (stringColumns.length > 0) {
+                query = query.andWhere((qb: any) => {
+                    stringColumns.forEach((col, idx) => {
+                        if (idx === 0) {
+                            qb.where(col, 'like', keyword);
+                        } else {
+                            qb.orWhere(col, 'like', keyword);
+                        }
+                    });
+                });
+            }
         }
 
         if (include && includeBy) {

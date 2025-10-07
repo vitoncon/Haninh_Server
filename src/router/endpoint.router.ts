@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
 const router = Router();
 
-import { MainController } from 'src/controllers/main.controller';
-import middlewaresMiddleware from 'src/middlewares/middlewares.middleware';
+import { MainController } from '../controllers/main.controller';
+import middlewaresMiddleware from '../middlewares/middlewares.middleware';
 
 router.get('/profile', middlewaresMiddleware.checkLogin, MainController.getProfile)
 

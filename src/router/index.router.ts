@@ -6,10 +6,10 @@ import file from "./file.router";
 import path from "path";
 import fs from "fs";
 import db from "../db/config.db";
-import { notFoundHandler } from "src/middlewares/notFoundHandler";
-import { MainController } from "src/controllers/main.controller";
-import middlewaresMiddleware from "src/middlewares/middlewares.middleware";
-import errorHandler from "src/middlewares/errorHandler";
+import { notFoundHandler } from "../middlewares/notFoundHandler";
+import { MainController } from "../controllers/main.controller";
+import middlewaresMiddleware from "../middlewares/middlewares.middleware";
+import errorHandler from "../middlewares/errorHandler";
 
 // Tạo router chính
 const router = Router();
