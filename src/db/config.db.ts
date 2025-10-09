@@ -6,11 +6,11 @@ dotenv.config();
 const db: Knex = knex({
   client: 'mysql2',
   connection: {
-    host: process.env.DB_HOST as string,
-    user: process.env.DB_USER_NAME as string,
-    password: process.env.DB_USER_PASS as string,
-    database: process.env.DB_NAME as string,
-    port: Number(process.env.DB_PORT),
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER_NAME || 'root',
+    password: process.env.DB_USER_PASS || '',
+    database: process.env.DB_NAME || 'haninh_academy_manager',
+    port: Number(process.env.DB_PORT) || 3306,
   },
   pool: { min: 0, max: 7 },
   log: {
