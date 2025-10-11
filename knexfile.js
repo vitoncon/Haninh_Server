@@ -13,7 +13,24 @@ module.exports = {
     },
     migrations: {
       directory: './migrations', // Đường dẫn đến thư mục chứa migrations
+      tableName: 'knex_migrations'
     },
+    seeds: {
+      directory: './seeds'
+    }
   },
-  // Cấu hình cho các môi trường khác nếu cần
+  production: {
+    client: 'mysql2',
+    connection: {
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER_NAME,
+      password: process.env.DB_USER_PASS,
+      database: process.env.DB_NAME,
+      port: Number(process.env.DB_PORT) || 3306,
+    },
+    migrations: {
+      directory: './migrations',
+      tableName: 'knex_migrations'
+    }
+  }
 };
