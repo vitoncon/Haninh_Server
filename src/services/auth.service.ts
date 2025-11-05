@@ -10,7 +10,7 @@ export class AuthService {
             return jwt.sign(
                 { id: user.id, roles: userRoleIds },
                 process.env.ACCESS_TOKEN_SECRET as string,
-                { expiresIn: 60 * 60 }
+                { expiresIn: 3 * 60 * 60 }
             );
         } catch (error : any) {
             console.log(error.message);

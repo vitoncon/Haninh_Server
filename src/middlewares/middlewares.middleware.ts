@@ -1,5 +1,5 @@
-import { RouterConfigs } from "src/configs/routerConfig.config";
-import { Permissions } from "src/configs/permission.config";
+import { RouterConfigs } from "../configs/routerConfig.config";
+import { Permissions } from "../configs/permission.config";
 import { NextFunction, Request, Response } from "express";
 import { AuthService } from "@services/auth.service";
 import userRoleService from "@services/userRole.service";

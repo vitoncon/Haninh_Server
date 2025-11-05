@@ -43,16 +43,55 @@ app.use('/img_avatar', express.static(path.join(__dirname, 'public/img_avatar'))
 route(app);
 
 swaggerDocs(app, port);
-// Determine whether to use HTTP or HTTPS based on the environment
-const server = process.env.NODE_ENV === 'production'
-    ? https.createServer({
-        key: fs.readFileSync(path.join(__dirname, '../../../../conf/web/trang-dev.ictu.vn/ssl/trang-dev.ictu.vn.key')),
-        cert: fs.readFileSync(path.join(__dirname, '../../../../conf/web/trang-dev.ictu.vn/ssl/trang-dev.ictu.vn.crt')),
-        ca: fs.readFileSync(path.join(__dirname, '../../../../conf/web/trang-dev.ictu.vn/ssl/trang-dev.ictu.vn.ca')),
-    }, app)
-    : http.createServer(app);
+
+// SSL Configuration - Check if SSL certificates exist
+const sslKeyPath = path.join(__dirname, '../../../../conf/web/haninhacademy.edu.vn/ssl/haninhacademy.edu.vn.key');
+const sslCertPath = path.join(__dirname, '../../../../conf/web/haninhacademy.edu.vn/ssl/haninhacademy.edu.vn.crt');
+const sslCaPath = path.join(__dirname, '../../../../conf/web/haninhacademy.edu.vn/ssl/haninhacademy.edu.vn.ca');
+
+// Helper function to check if file exists
+const fileExists = (filePath: string): boolean => {
+    try {
+        return fs.existsSync(filePath);
+    } catch {
+        return false;
+    }
+};
+
+// Determine whether to use HTTP or HTTPS
+let server;
+let isHttps = false;
+
+if (process.env.NODE_ENV === 'production' && 
+    fileExists(sslKeyPath) && 
+    fileExists(sslCertPath) && 
+    fileExists(sslCaPath)) {
+    try {
+        server = https.createServer({
+            key: fs.readFileSync(sslKeyPath),
+            cert: fs.readFileSync(sslCertPath),
+            ca: fs.readFileSync(sslCaPath),
+        }, app);
+        isHttps = true;
+        console.log('SSL certificates found. Starting HTTPS server...');
+    } catch (error) {
+        console.warn('Failed to load SSL certificates, falling back to HTTP:', error);
+        server = http.createServer(app);
+    }
+} else {
+    if (process.env.NODE_ENV === 'production') {
+        console.warn('SSL certificates not found. Starting in HTTP mode.');
+        console.warn('Certificate paths checked:');
+        console.warn(`  Key: ${sslKeyPath}`);
+        console.warn(`  Cert: ${sslCertPath}`);
+        console.warn(`  CA: ${sslCaPath}`);
+    }
+    server = http.createServer(app);
+}
 
 // Start the server
 server.listen(port, () => {
-    console.log(`App running on ${process.env.NODE_ENV === 'production' ? 'https' : 'http'}://localhost:${port}`);
+    const protocol = isHttps ? 'https' : 'http';
+    console.log(`✅ App running on ${protocol}://localhost:${port}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });

@@ -14,11 +14,31 @@ export const RouterConfigs:RouterConfig = {
         isPublic: false,
     },
     'schedules': {
+        table: 'schedules',
+        isPublic: false,
+    },
+    'exams': {
+        table: 'exams',
+        isPublic: false,
+    },
+    'exam_skills': {
+        table: 'exam_skills',
+        isPublic: false,
+    },
+    'exam_results': {
+        table: 'exam_results',
+        isPublic: false,
+    },
+    'class_schedules': {
         table: 'class_schedules',
         isPublic: false,
     },
     'teachers': {
         table: 'teachers',
+        isPublic: false,
+    },
+    'class_teachers': {
+        table: 'class_teachers',
         isPublic: false,
     },
     'students': {

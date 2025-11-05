@@ -50,6 +50,14 @@ export class MainService {
         throw new Error('Không tìm thấy bản ghi');
     }
 
+    static async getRecordById(table: string, id: number): Promise<any> {
+        const record = await db(table).where({ id }).first();
+        if (!record) {
+            throw new Error('Không tìm thấy bản ghi');
+        }
+        return record;
+    }
+
     static async deleteRecord(table: string, id: number): Promise<PostUpdateDeleteResponse> {
         const affectedRows = await db(table).where({ id }).del();
         if (affectedRows) {
@@ -82,9 +90,17 @@ export class MainService {
         });
 
         // Nếu bảng có is_deleted thì tự động where is_deleted = 0
+        // Trừ khi có parameter include_deleted = true
         let query = db(table).select('*');
         if (columnsMap['is_deleted']) {
-            query = query.where({ is_deleted: 0 });
+            // Check if we should include deleted records
+            const includeDeleted = conditions.some((condition: any) => 
+                condition.key === 'include_deleted' && condition.value === 'true'
+            );
+            
+            if (!includeDeleted) {
+                query = query.where({ is_deleted: 0 });
+            }
         }
         // console.log(query.toSQL());
         // console.log(conditions);
@@ -93,8 +109,6 @@ export class MainService {
         if (Array.isArray(conditions)) {
             conditions.forEach((condition: any) => {
                 const key = condition.key;
-                // let value = decodeURI(condition.value).toString();
-                // console.log(value);
                 let value: any;
                 try {
                     value = decodeURIComponent(condition.value).toString();
@@ -110,11 +124,21 @@ export class MainService {
                 
                 if (columnType) {
                     if (columnType.includes('int')) {
-                        value = parseInt(value, 10);
+                        // Don't parse to int if using 'in' operator with comma-separated values
+                        if (compare.toLowerCase() !== 'in') {
+                            value = parseInt(value, 10);
+                        }
                     } else if (columnType.includes('decimal') || columnType.includes('float') || columnType.includes('double')) {
                         value = parseFloat(value);
                     } else if (columnType.includes('date') || columnType.includes('datetime') || columnType.includes('timestamp')) {
-                        value = new Date(value);
+                        // Handle date conversion properly to avoid timezone issues
+                        if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+                            // For date-only strings (YYYY-MM-DD), parse manually to avoid timezone conversion
+                            const [year, month, day] = value.split('-').map(Number);
+                            value = new Date(year, month - 1, day, 12, 0, 0); // Use noon to avoid DST issues
+                        } else {
+                            value = new Date(value);
+                        }
                     } else if (columnType.includes('varchar') || columnType.includes('text')) {
                         // console.log(value);
                         
@@ -137,10 +161,14 @@ export class MainService {
                             const likeValue = value;
                             query = query.orWhere(key, 'LIKE', `${likeValue}%`);
                         } else if (compare.toLowerCase() === 'in') {
-                            const values = value.split(',');
+                            // Ensure value is a string before splitting
+                            const valueStr = typeof value === 'string' ? value : value.toString();
+                            const values = valueStr.split(',');
                             query = query.orWhereIn(key, values);
                         } else if (compare.toLowerCase() === 'between') {
-                            const values = value.split(',');
+                            // Ensure value is a string before splitting
+                            const valueStr = typeof value === 'string' ? value : value.toString();
+                            const values = valueStr.split(',');
                             query = query.orWhereBetween(key, [values[0], values[1]]);
                         } else if (['>', '>=', '<', '<=', '=', '!=', '<>'].includes(compare)) {
                             query = query.orWhere(key, compare, value);
@@ -159,10 +187,14 @@ export class MainService {
                             const likeValue = value;
                             query = query.where(key, 'LIKE', `${likeValue}%`);
                         } else if (compare.toLowerCase() === 'in') {
-                            const values = value.split(',');
+                            // Ensure value is a string before splitting
+                            const valueStr = typeof value === 'string' ? value : value.toString();
+                            const values = valueStr.split(',');
                             query = query.whereIn(key, values);
                         } else if (compare.toLowerCase() === 'between') {
-                            const values = value.split(',');
+                            // Ensure value is a string before splitting
+                            const valueStr = typeof value === 'string' ? value : value.toString();
+                            const values = valueStr.split(',');
                             query = query.whereBetween(key, [values[0], values[1]]);
                         } else if (['>', '>=', '<', '<=', '=', '!=', '<>'].includes(compare)) {
                             query = query.where(key, compare, value);
@@ -207,8 +239,6 @@ export class MainService {
         const totalRecords = parseInt(countResult.total.toString());
 
         let records;
-        
-        console.log(query.toQuery());
         
         if (limit === -1) {
             records = await query;

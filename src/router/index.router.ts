@@ -18,8 +18,9 @@ const modulesDir = path.join(__dirname, "modules");
 // Mảng lưu các route đã đăng ký
 const moduleRoutes: string[] = [];
 
-// Đọc tất cả các module trong thư mục `modules`
-fs.readdirSync(modulesDir).forEach((file) => {
+// Đọc tất cả các module trong thư mục `modules` (nếu thư mục tồn tại)
+if (fs.existsSync(modulesDir)) {
+  fs.readdirSync(modulesDir).forEach((file) => {
   const modulePath = path.join(modulesDir, file);
 
   if (fs.existsSync(modulePath)) {
@@ -63,7 +64,10 @@ fs.readdirSync(modulesDir).forEach((file) => {
   } else {
     console.warn(`Module ${file} does not exist. Skipping.`);
   }
-});
+  });
+} else {
+  console.log("Modules directory does not exist. Skipping dynamic module loading.");
+}
 
 // Đăng ký các route mặc định sau khi kiểm tra
 const route = (app: Express): void => {

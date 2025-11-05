@@ -12,6 +12,9 @@ router.post('/:router',middlewaresMiddleware.GuardMiddleware, MainController.cre
 // Get all records from any table based on 'table'
 router.get('/:router',middlewaresMiddleware.GuardMiddleware, MainController.get );
 
+// Get a single record by ID from any table
+router.get('/:router/:id',middlewaresMiddleware.GuardMiddleware, MainController.getById );
+
 // Update a record in any table based on 'table' and 'id'
 router.put('/:router/:id',middlewaresMiddleware.GuardMiddleware, MainController.put );
 

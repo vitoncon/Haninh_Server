@@ -4,11 +4,11 @@ import { MainService } from '@services/main.service';
 // import fs from 'fs';
 // import path from 'path';
 import { Helper } from '@utils/helper/helper';
-import { RouterConfigs } from 'src/configs/routerConfig.config';
+import { RouterConfigs } from '../configs/routerConfig.config';
 import { AuthService } from '@services/auth.service';
 import { UserService } from '@services/user.service';
-import { BadRequestError } from 'src/core/errors/error.response';
-import { PostAndUpdateDeleteResponse } from 'src/core/responses/response.response';
+import { BadRequestError } from '../core/errors/error.response';
+import { PostAndUpdateDeleteResponse } from '../core/responses/response.response';
 
 
 export class MainController {
@@ -16,6 +16,9 @@ export class MainController {
     static async create(req: Request, res: Response): Promise<any> {
         try {
             const { router } = req.params;
+            console.log(`🔍 Generic POST endpoint called for router: ${router}`);
+            console.log(`🔍 Request body:`, req.body);
+            
             if (!router) {
                 throw new BadRequestError(`Router ${router} not found`);
             }
@@ -116,8 +119,7 @@ export class MainController {
             if (!table) {
                 return res.status(404).json({ error: `Table for router ${router} not found` });
             }
-            const conditions = req.query.condition ? JSON.parse(JSON.stringify(req.query.condition)) : [];
-            // console.log(req.query.condition);
+            const conditions = req.query.condition ? JSON.parse(req.query.condition as string) : [];
             
             const include = req.query.include?.toString();
             const includeBy = req.query.include_by?.toString();
@@ -125,6 +127,8 @@ export class MainController {
             const orderBy = req.query.order_by?.toString();
             const limit = parseInt(req.query.limit?.toString() ?? '20', 10);
             const page = parseInt(req.query.page?.toString() ?? '1', 10);
+            
+            // console.log(req.query.condition);
             const searchKeyword = (req.query.q?.toString() ?? req.query.search?.toString() ?? '').trim();
 
             const response = await MainService.getRecords(
@@ -138,6 +142,7 @@ export class MainController {
                 page,
                 searchKeyword
             );
+            
             
             
             const keyType = MainService.getKeyTypeFromModule(router); // Gọi hàm để lấy keyType
@@ -155,6 +160,25 @@ export class MainController {
         }
     }
 
+
+    static async getById(req: Request, res: Response, next: NextFunction): Promise<any> {
+        try {
+            const { router, id } = req.params;
+            if (!router) {
+                return res.status(404).json({ error: `Router ${router} not found` });
+            }
+            const table = RouterConfigs[router];
+            if (!table) {
+                return res.status(404).json({ error: `Table for router ${router} not found` });
+            }
+            
+            const response = await MainService.getRecordById(table.table, parseInt(id));
+            res.status(200).json(new PostAndUpdateDeleteResponse(response));
+        } catch (error: any) {
+            console.error('Error fetching record by ID:', error.message);
+            res.status(500).json({ error: error.message });
+        }
+    }
 
     static async getProfile(req: Request, res: Response, next: NextFunction): Promise<any> {
         try {

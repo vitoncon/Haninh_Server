@@ -28,6 +28,30 @@ export const  Permissions: Permission[] = [
     {
         id: 1,
         role_id: 1,
+        table_name: 'exams',
+        pms: [1, 1, 1, 1, 0]
+    },
+    {
+        id: 1,
+        role_id: 1,
+        table_name: 'exam_skills',
+        pms: [1, 1, 1, 1, 0]
+    },
+    {
+        id: 2,
+        role_id: 2,
+        table_name: 'exam_skills',
+        pms: [1, 1, 1, 1, 0]
+    },
+    {
+        id: 1,
+        role_id: 1,
+        table_name: 'exam_results',
+        pms: [1, 1, 1, 1, 0]
+    },
+    {
+        id: 1,
+        role_id: 1,
         table_name: 'class_schedules',
         pms: [1, 1, 1, 1, 0]
     },
@@ -41,6 +65,12 @@ export const  Permissions: Permission[] = [
         id: 1,
         role_id: 1,
         table_name: 'teachers',
+        pms: [1, 1, 1, 1, 0]
+    },
+    {
+        id: 1,
+        role_id: 1,
+        table_name: 'class_teachers',
         pms: [1, 1, 1, 1, 0]
     },
     {
