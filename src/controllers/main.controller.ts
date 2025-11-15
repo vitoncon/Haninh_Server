@@ -119,7 +119,21 @@ export class MainController {
             if (!table) {
                 return res.status(404).json({ error: `Table for router ${router} not found` });
             }
-            const conditions = req.query.condition ? JSON.parse(req.query.condition as string) : [];
+            let conditions = req.query.condition ? JSON.parse(req.query.condition as string) : [];
+            
+            // Filter teachers by current user if role is teacher (role_id = 2)
+            if (table.table === 'teachers' && req.body.decode) {
+                const { roles, id: userId } = req.body.decode;
+                if (roles && roles.includes(2) && !roles.includes(1)) { // Role 2 = Teacher, Role 1 = Admin
+                    // Add condition to filter by user_id
+                    conditions.push({
+                        key: 'user_id',
+                        value: userId.toString(),
+                        compare: '=',
+                        orWhere: 'and'
+                    });
+                }
+            }
             
             const include = req.query.include?.toString();
             const includeBy = req.query.include_by?.toString();
