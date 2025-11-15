@@ -9,9 +9,15 @@ export const  Permissions: Permission[] = [
     },
     {
         id: 1,
-        role_id: 2,
+        role_id: 1,
         table_name: 'users',
         pms: [1, 1,1, 1, 1] // [canAccess, canAdd, canEdit, canDelete, onlyGetPersonal]
+    },
+    {
+        id: 1,
+        role_id: 1,
+        table_name: 'roles',
+        pms: [1, 1, 1, 1, 0]
     },
      {
         id: 1,
@@ -20,10 +26,22 @@ export const  Permissions: Permission[] = [
         pms: [1, 1, 1, 1, 0]
     },
     {
+        id: 2,
+        role_id: 2,
+        table_name: 'courses',
+        pms: [1, 0, 0, 0, 0] // Giáo viên chỉ có thể xem thông tin khóa học
+    },
+    {
         id: 1,
         role_id: 1,
         table_name: 'classes',
         pms: [1, 1, 1, 1, 0]
+    },
+    {
+        id: 2,
+        role_id: 2,
+        table_name: 'classes',
+        pms: [1, 0, 0, 0, 0] // Giáo viên chỉ có thể xem thông tin lớp học
     },
     {
         id: 1,
@@ -56,10 +74,22 @@ export const  Permissions: Permission[] = [
         pms: [1, 1, 1, 1, 0]
     },
     {
+        id: 2,
+        role_id: 2,
+        table_name: 'class_schedules',
+        pms: [1, 0, 0, 0, 0] // Giáo viên chỉ có thể xem lịch học của lớp
+    },
+    {
         id: 1,
         role_id: 1,
         table_name: 'schedules',
         pms: [1, 1, 1, 1, 0]
+    },
+    {
+        id: 2,
+        role_id: 2,
+        table_name: 'schedules',
+        pms: [1, 0, 0, 0, 0] // Giáo viên chỉ có thể xem lịch dạy của mình
     },
     {
         id: 1,
@@ -68,10 +98,22 @@ export const  Permissions: Permission[] = [
         pms: [1, 1, 1, 1, 0]
     },
     {
+        id: 2,
+        role_id: 2,
+        table_name: 'teachers',
+        pms: [1, 0, 0, 0, 0] // Giáo viên chỉ có thể xem danh sách teachers (để tìm teacher của mình)
+    },
+    {
         id: 1,
         role_id: 1,
         table_name: 'class_teachers',
         pms: [1, 1, 1, 1, 0]
+    },
+    {
+        id: 2,
+        role_id: 2,
+        table_name: 'class_teachers',
+        pms: [1, 0, 0, 0, 0] // Giáo viên chỉ có thể xem phân công giảng dạy (class_teachers)
     },
     {
         id: 1,
@@ -98,6 +140,12 @@ export const  Permissions: Permission[] = [
         pms: [1, 1, 1, 1, 0]
     },
     {
+        id: 2,
+        role_id: 2,
+        table_name: 'teaching_assignments',
+        pms: [1, 0, 0, 0, 0] // Giáo viên chỉ có thể xem phân công giảng dạy của mình
+    },
+    {
         id: 1,
         role_id: 1,
         table_name: 'fees',
@@ -114,6 +162,12 @@ export const  Permissions: Permission[] = [
         role_id: 1,
         table_name: 'student_certificates',
         pms: [1, 1, 1, 1, 0]
+    },
+    {
+        id: 1,
+        role_id: 1,
+        table_name: 'user_roles',
+        pms: [1, 1, 1, 1, 0] // [canAccess, canAdd, canEdit, canDelete, onlyGetPersonal]
     },
 ]
 

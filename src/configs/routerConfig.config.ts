@@ -69,5 +69,13 @@ export const RouterConfigs:RouterConfig = {
         table: 'student_certificates',
         isPublic: false,
     },
+    'roles': {
+        table: 'roles',
+        isPublic: false,
+    },
+    'user_roles': {
+        table: 'user_roles',
+        isPublic: false,
+    },
 
 };
