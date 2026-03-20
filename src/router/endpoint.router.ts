@@ -2,11 +2,23 @@ import { Router, Request, Response } from 'express';
 const router = Router();
 
 import { MainController } from '../controllers/main.controller';
+import { AdminFeeController } from '../controllers/admin-fee.controller';
 import middlewaresMiddleware from '../middlewares/middlewares.middleware';
 
 router.get('/profile', middlewaresMiddleware.checkLogin, MainController.getProfile)
 
+// Admin Fee Approval Flow
+router.patch('/admin/fees/:id/approve', middlewaresMiddleware.checkLogin, AdminFeeController.approvePayment);
+router.patch('/admin/fees/:id/reject', middlewaresMiddleware.checkLogin, AdminFeeController.rejectPayment);
+
+// Fee Statistics
+router.get('/admin-fees/class-statistics', middlewaresMiddleware.checkLogin, AdminFeeController.getClassFeeStatistics);
+
+import { PaymentWebhookController } from '../controllers/payment-webhook.controller';
+router.post('/payments/fake-callback', PaymentWebhookController.fakeCallback);
+
 // Add a record to any table based on 'table'
+router.post('/payments/confirm', middlewaresMiddleware.checkLogin, MainController.confirmPayment);
 router.post('/:router',middlewaresMiddleware.GuardMiddleware, MainController.create);
 
 // Get all records from any table based on 'table'

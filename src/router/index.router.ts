@@ -3,6 +3,10 @@ import endpoint from "./endpoint.router";
 import destroyed from "./destroy.router";
 import auth from "./auth.router";
 import file from "./file.router";
+import ai from "./ai.router";
+import chatbotRoute from "./chatbot.router";
+import studentRouter from "./student.router";
+import paymentRouter from "./payment.router";
 import path from "path";
 import fs from "fs";
 import db from "../db/config.db";
@@ -73,11 +77,17 @@ if (fs.existsSync(modulesDir)) {
 const route = (app: Express): void => {
   console.log("Registered module routes:", moduleRoutes);
 
+  // Register AI routes BEFORE endpoint router (which has catch-all /:router)
+  // This ensures /api/ai/* routes are handled before GuardMiddleware
   const defaultRoutes = [
     { path: "/api/auth/", handler: auth },
     { path: "/api/media/", handler: file },
     { path: "/api/destroy/", handler: destroyed },
-    { path: "/api/", handler: endpoint },
+    { path: "/api/ai/", handler: ai }, // Public routes - no GuardMiddleware
+    { path: "/api/chatbot", handler: chatbotRoute },
+    { path: "/api/student", handler: studentRouter },
+    { path: "/api/payments", handler: paymentRouter },
+    { path: "/api/", handler: endpoint }, // Has GuardMiddleware on /:router routes
   ];
 
   defaultRoutes.forEach(({ path: routePath, handler }) => {

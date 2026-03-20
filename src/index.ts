@@ -12,8 +12,12 @@ import { BcryptService } from "@services/bcrypt.service";
 // Load environment variables
 dotenv.config();
 
+import { SocketService } from './services/socket.service';
+
 // Import router
 import route from "./router/index.router";
+import publicCoursesRoutes from "./router/publicCourses.routes";
+
 
 // Connect to DB
 import "./db/config.db";
@@ -28,7 +32,8 @@ const port = process.env.PORT || 5000;
 // Serve static files
 app.use(express.static(__dirname + "/public"));
 
-// Use body-parser for JSON
+// Parse JSON bodies
+app.use(express.json());
 app.use(bodyParser.json());
 
 // Configure CORS
@@ -37,6 +42,10 @@ app.use(cors({ origin: '*' }));
 // Serve static files (to access images from public folder)
 app.use('/img_avatar', express.static(path.join(__dirname, 'public/img_avatar')));
 
+
+
+// Define public no-auth routes
+app.use('/api/public', publicCoursesRoutes);
 
 
 // Define routes
@@ -89,9 +98,20 @@ if (process.env.NODE_ENV === 'production' &&
     server = http.createServer(app);
 }
 
+// Initialize Socket.io
+const socketPort = process.env.PORT_SOCKET ? Number(process.env.PORT_SOCKET) : undefined;
+if (socketPort) {
+    SocketService.init(undefined, socketPort); // Use dedicated port
+} else {
+    SocketService.init(server); // Share port with http server
+}
+
 // Start the server
 server.listen(port, () => {
     const protocol = isHttps ? 'https' : 'http';
     console.log(`✅ App running on ${protocol}://localhost:${port}`);
+    if (socketPort) {
+        console.log(`✅ Socket.io running on port: ${socketPort}`);
+    }
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });

@@ -7,8 +7,66 @@ import path from 'path';
 
 export class MainService {
     
+    static normalizeStatus(status: any): string {
+        const s = (status || '').toString().trim().toUpperCase();
+        if (s === 'PAID') return 'PAID';
+        if (s === 'PENDING') return 'PENDING';
+        return 'UNPAID';
+    }
+    
     static async createRecord(table: string, data: any): Promise<PostUpdateDeleteResponse> {
+        if (table === 'fees') {
+            if (data.status !== undefined) {
+                data.status = this.normalizeStatus(data.status);
+            }
+            if (data.status === 'PAID' && !data.paid_date) {
+                data.paid_date = db.raw('CURRENT_DATE');
+            }
+            // Auto-calculate due_date if class_id is provided and due_date missing
+            if (data.class_id && !data.due_date) {
+                const classObj = await db('classes').where({ id: data.class_id }).first();
+                if (!classObj || !classObj.start_date || classObj.start_date <= '1900-01-01') {
+                    throw new Error(`Class ${data.class_id} must have a valid start_date before creating fee.`);
+                }
+                const startDate = new Date(classObj.start_date);
+                data.due_date = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+            }
+        }
+
         const [id] = await db(table).insert(data);
+
+        // System Hook: Auto-create fee record when a student is assigned to a class
+        if (table === 'class_students' && data.student_id && data.class_id) {
+            try {
+                const classObj = await db('classes').where({ id: data.class_id }).first();
+                if (classObj && classObj.course_id) {
+                    const courseObj = await db('courses').where({ id: classObj.course_id }).first();
+                    if (courseObj) {
+                        // Calculate due_date = start_date + 7 days
+                        if (!classObj.start_date || classObj.start_date <= '1900-01-01') {
+                            throw new Error(`Class ${data.class_id} must have a valid start_date before creating fee record.`);
+                        }
+                        
+                        const startDate = new Date(classObj.start_date);
+                        const dueDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+                        // ignore duplicate error if re-enrolled
+                        await db('fees').insert({
+                            student_id: data.student_id,
+                            class_id: data.class_id,
+                            course_id: classObj.course_id,
+                            amount: courseObj.tuition_fee || 0,
+                            status: 'UNPAID',
+                            due_date: dueDate,
+                            created_at: new Date()
+                        }).onConflict(['student_id', 'class_id']).ignore();
+                    }
+                }
+            } catch (err) {
+                console.error('Error auto-creating fee record:', err);
+            }
+        }
+
         return {
             message: 'inserted successfully',
             code: 'success',
@@ -17,6 +75,15 @@ export class MainService {
     }
 
     static async updateRecord(table: string, id: number, data: any): Promise<PostUpdateDeleteResponse> {
+        if (table === 'fees') {
+            if (data.status !== undefined) {
+                data.status = this.normalizeStatus(data.status);
+            }
+            if (data.status === 'PAID' && !data.paid_date) {
+                data.paid_date = db.raw('CURRENT_DATE');
+            }
+        }
+
         const affectedRows = await db(table).where({ id }).update(data);
         if (affectedRows) {
             return {
@@ -105,6 +172,7 @@ export class MainService {
         // console.log(query.toSQL());
         // console.log(conditions);
         
+        
 
         if (Array.isArray(conditions)) {
             conditions.forEach((condition: any) => {
@@ -121,6 +189,68 @@ export class MainService {
                 const orWhere = condition.orWhere || 'and';
 
                 const columnType = columnsMap[key];
+
+                // Helper to apply where/orWhere with optional IN/BETWEEN but without type casting
+                const applyRawCondition = () => {
+                    if (orWhere === 'or') {
+                        if (compare.toLowerCase() === 'like') {
+                            const likeValue = value;
+                            query = query.orWhere(key, 'LIKE', `%${likeValue}%`);
+                        } else if (compare.toLowerCase() === 'not like') {
+                            const likeValue = value;
+                            query = query.orWhere(key, 'notLike', `%${likeValue}%`);
+                        } else if (compare.toLowerCase() === 'lesslike') {
+                            const likeValue = value;
+                            query = query.orWhere(key, 'LIKE', `%${likeValue}`);
+                        } else if (compare.toLowerCase() === 'rightlike') {
+                            const likeValue = value;
+                            query = query.orWhere(key, 'LIKE', `${likeValue}%`);
+                        } else if (compare.toLowerCase() === 'in') {
+                            const valueStr = typeof value === 'string' ? value : value.toString();
+                            const values = valueStr.split(',');
+                            query = query.orWhereIn(key, values);
+                        } else if (compare.toLowerCase() === 'between') {
+                            const valueStr = typeof value === 'string' ? value : value.toString();
+                            const values = valueStr.split(',');
+                            query = query.orWhereBetween(key, [values[0], values[1]]);
+                        } else if (['>', '>=', '<', '<=', '=', '!=', '<>'].includes(compare)) {
+                            query = query.orWhere(key, compare, value);
+                        }
+                    } else {
+                        if (compare.toLowerCase() === 'like') {
+                            const likeValue = value;
+                            query = query.where(key, 'LIKE', `%${likeValue}%`);
+                        } else if (compare.toLowerCase() === 'not like') {
+                            const likeValue = value;
+                            query = query.where(key, 'notLike', `%${likeValue}%`);
+                        } else if (compare.toLowerCase() === 'lesslike') {
+                            const likeValue = value;
+                            query = query.where(key, 'LIKE', `%${likeValue}`);
+                        } else if (compare.toLowerCase() === 'rightlike') {
+                            const likeValue = value;
+                            query = query.where(key, 'LIKE', `${likeValue}%`);
+                        } else if (compare.toLowerCase() === 'in') {
+                            const valueStr = typeof value === 'string' ? value : value.toString();
+                            const values = valueStr.split(',');
+                            query = query.whereIn(key, values);
+                        } else if (compare.toLowerCase() === 'between') {
+                            const valueStr = typeof value === 'string' ? value : value.toString();
+                            const values = valueStr.split(',');
+                            query = query.whereBetween(key, [values[0], values[1]]);
+                        } else if (['>', '>=', '<', '<=', '=', '!=', '<>'].includes(compare)) {
+                            query = query.where(key, compare, value);
+                        }
+                    }
+                };
+
+                // Nếu key không tồn tại trong columnsMap nhưng là fully-qualified (vd: study_results.student_id)
+                // thì áp dụng điều kiện thô, không cố gắng ép kiểu theo columnsMap
+                if (!columnType) {
+                    if (typeof key === 'string' && key.includes('.')) {
+                        applyRawCondition();
+                    }
+                    return;
+                }
                 
                 if (columnType) {
                     if (columnType.includes('int')) {
@@ -140,67 +270,10 @@ export class MainService {
                             value = new Date(value);
                         }
                     } else if (columnType.includes('varchar') || columnType.includes('text')) {
-                        // console.log(value);
-                        
                         value = value.toString();
                     }
-                    // console.log(value);
-                    
-                    if(orWhere === 'or'){
 
-                        if (compare.toLowerCase() === 'like') {
-                            const likeValue = value;
-                            query = query.orWhere(key, 'LIKE', `%${likeValue}%`);
-                        }if (compare.toLowerCase() === 'NOT LIKE') {
-                            const likeValue = value;
-                            query = query.orWhere(key, 'notLike', `%${likeValue}%`);
-                        } else if (compare.toLowerCase() === 'lessLike') {
-                            const likeValue = value;
-                            query = query.orWhere(key, 'LIKE', `%${likeValue}`);
-                        } else if (compare.toLowerCase() === 'rightLike') {
-                            const likeValue = value;
-                            query = query.orWhere(key, 'LIKE', `${likeValue}%`);
-                        } else if (compare.toLowerCase() === 'in') {
-                            // Ensure value is a string before splitting
-                            const valueStr = typeof value === 'string' ? value : value.toString();
-                            const values = valueStr.split(',');
-                            query = query.orWhereIn(key, values);
-                        } else if (compare.toLowerCase() === 'between') {
-                            // Ensure value is a string before splitting
-                            const valueStr = typeof value === 'string' ? value : value.toString();
-                            const values = valueStr.split(',');
-                            query = query.orWhereBetween(key, [values[0], values[1]]);
-                        } else if (['>', '>=', '<', '<=', '=', '!=', '<>'].includes(compare)) {
-                            query = query.orWhere(key, compare, value);
-                        }
-                    }else if(orWhere === 'and'){
-                        if (compare.toLowerCase() === 'like') {
-                            const likeValue = value;
-                            query = query.where(key, 'LIKE', `%${likeValue}%`);
-                        }if (compare.toLowerCase() === 'NOT LIKE') {
-                            const likeValue = value;
-                            query = query.where(key, 'notLike', `%${likeValue}%`);
-                        } else if (compare.toLowerCase() === 'lessLike') {
-                            const likeValue = value;
-                            query = query.where(key, 'LIKE', `%${likeValue}`);
-                        } else if (compare.toLowerCase() === 'rightLike') {
-                            const likeValue = value;
-                            query = query.where(key, 'LIKE', `${likeValue}%`);
-                        } else if (compare.toLowerCase() === 'in') {
-                            // Ensure value is a string before splitting
-                            const valueStr = typeof value === 'string' ? value : value.toString();
-                            const values = valueStr.split(',');
-                            query = query.whereIn(key, values);
-                        } else if (compare.toLowerCase() === 'between') {
-                            // Ensure value is a string before splitting
-                            const valueStr = typeof value === 'string' ? value : value.toString();
-                            const values = valueStr.split(',');
-                            query = query.whereBetween(key, [values[0], values[1]]);
-                        } else if (['>', '>=', '<', '<=', '=', '!=', '<>'].includes(compare)) {
-                            query = query.where(key, compare, value);
-                        }
-                    }
-                    
+                    applyRawCondition();
                 }
             });
         }
@@ -235,11 +308,121 @@ export class MainService {
             query = query.orderBy(orderBy, sortOrder);
         }
 
+        // Debug SQL for study_results to help trace student dashboard issues
+        try {
+            if (table === 'study_results') {
+                const sqlDebug = query.clone().toSQL();
+                console.log('Study Results SQL:', sqlDebug);
+            }
+        } catch (e) {
+            console.error('Error logging Study Results SQL:', e);
+        }
+
         const [countResult] = await query.clone().count('* as total');
         const totalRecords = parseInt(countResult.total.toString());
 
         let records;
         
+        if (limit === -1) {
+            records = await query;
+        } else {
+            const offset = (page - 1) * limit;
+            records = await query.limit(limit).offset(offset);
+        }
+
+        return {
+            code: 'success',
+            message: 'Request success!',
+            recordTotal: totalRecords,
+            recordFiltered: records.length,
+            data: records,
+        };
+    }
+
+    /**
+     * Specialized query for study-results endpoint:
+     * Returns exam_results joined with exam_skills, exams, and classes
+     * so the frontend can display class_code, class_name, exam_name, exam_date, etc.
+     */
+    static async getExamResultsWithDetails(
+        conditions: any[],
+        limit: number,
+        page: number,
+        searchKeyword?: string
+    ): Promise<GetResponse> {
+        let query = db('exam_results as er')
+            .join('exam_skills as es', 'er.exam_skill_id', 'es.id')
+            .join('exams as e', 'es.exam_id', 'e.id')
+            .join('classes as c', 'e.class_id', 'c.id')
+            .select(
+                'er.*',
+                'es.skill_type',
+                'e.exam_name',
+                'e.exam_date',
+                'c.class_code',
+                'c.class_name'
+            );
+
+        // Apply basic conditions for RBAC (currently supports student_id and class_id)
+        if (Array.isArray(conditions)) {
+            conditions.forEach((condition: any) => {
+                const key = condition.key;
+                let value: any = condition.value;
+                const compare = (condition.compare || '=').toString().toLowerCase();
+                const orWhere = (condition.orWhere || 'and').toString().toLowerCase();
+
+                // Map logical keys to joined table columns
+                let column: string | null = null;
+                if (key === 'student_id') {
+                    column = 'er.student_id';
+                } else if (key === 'class_id') {
+                    // Class scoping from exams/classes
+                    column = 'c.id';
+                } else {
+                    // Ignore unsupported keys to avoid breaking the query
+                    return;
+                }
+
+                const apply = (builder: any) => {
+                    if (compare === 'in') {
+                        const valueStr = typeof value === 'string' ? value : value.toString();
+                        const values = valueStr.split(',').filter((v: string) => v !== '');
+                        builder.whereIn(column!, values);
+                    } else {
+                        builder.where(column!, compare, value);
+                    }
+                };
+
+                if (orWhere === 'or') {
+                    query = query.orWhere((qb: any) => apply(qb));
+                } else {
+                    query = query.andWhere((qb: any) => apply(qb));
+                }
+            });
+        }
+
+        // Optional simple search on exam_name / class_name
+        if (searchKeyword && searchKeyword.length > 0) {
+            const keyword = `%${searchKeyword}%`;
+            query = query.andWhere((qb: any) => {
+                qb.where('e.exam_name', 'like', keyword)
+                  .orWhere('c.class_name', 'like', keyword)
+                  .orWhere('c.class_code', 'like', keyword);
+            });
+        }
+
+        // Debug SQL for study-results
+        try {
+            const sqlDebug = query.clone().toSQL();
+            console.log('Study Results (joined) SQL:', sqlDebug);
+        } catch (e) {
+            console.error('Error logging Study Results (joined) SQL:', e);
+        }
+
+        const [countResult] = await query.clone().count('* as total');
+        const totalRecords = parseInt(countResult.total.toString());
+
+        let records;
         if (limit === -1) {
             records = await query;
         } else {

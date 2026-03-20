@@ -50,7 +50,7 @@ export const RouterConfigs:RouterConfig = {
         isPublic: false,
     },
     'study-results': {
-        table: 'study_results',
+        table: 'exam_results',
         isPublic: false,
     },
     'teaching-assignments': {
@@ -77,5 +77,12 @@ export const RouterConfigs:RouterConfig = {
         table: 'user_roles',
         isPublic: false,
     },
-
+    'attendance': {
+        table: 'attendance',
+        isPublic: false,
+    },
+    'leads': {
+        table: 'leads',
+        isPublic: false,
+    },
 };
